@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
 
+mod solui;
+
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -57,12 +59,19 @@ impl Warehouse {
             if self.items[index].quantity <= 0 {self.items.swap_remove(index);}
         }
     }
+
+    fn formatItems(&self) -> String {
+        let mut result: String = String::from("");
+        for item in &self.items {
+            result += &(item.name.clone() + &String::from(": ") + &item.quantity.to_string() + &String::from("\n"));
+        }
+        return result;
+    }
 }
 
-fn main() {
+fn main() -> tetra::Result<()> {
     let mut warehouse = Warehouse::new();
-    warehouse.addItem(String::from("Screwdriver"), Some(5), Some(Category::Tools));
-    warehouse.addItem(String::from("Screwdriver"), Some(1), Some(Category::Tools));
-    warehouse.removeItem(String::from("Screwdriver"), Some(2));
-    println!("{:#?}", warehouse);
+    warehouse.addItem(String::from("Screwdrivers"), Some(5), Some(Category::Tools));
+
+    solui::start()
 }
