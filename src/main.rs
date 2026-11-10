@@ -69,9 +69,11 @@ impl Warehouse {
     }
 }
 
-fn main() -> tetra::Result<()> {
+fn main() -> tetra::Result {
     let mut warehouse = Warehouse::new();
     warehouse.addItem(String::from("Screwdrivers"), Some(5), Some(Category::Tools));
-
-    solui::start()
+    
+    let mut gState = solui::GameState::new();
+    gState.requestAdd(solui::Coords::new(100.0, 100.0, 20.0, 20.0));
+    solui::start(gState)
 }

@@ -9,13 +9,26 @@ use tetra::math::Vec2;
 use tetra::window;
 use tetra::{Context, ContextBuilder, State};
 
-struct Coords {
+#[derive(Clone)]
+pub struct Coords {
     x: f32,
     y: f32,
     w: f32,
     h: f32,
 }
 
+impl Coords {
+    pub fn new(x: f32, y: f32, w: f32, h: f32) -> Coords {
+        Coords {
+            x: x,
+            y: y,
+            w: w,
+            h: h,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Element {
     pos: Vec2<f32>,
     mesh: Mesh,
@@ -50,7 +63,6 @@ impl Element {
         self.mesh.draw(ctx, params);
     }
 }
-
 macro_rules! newElement {
     ($ctx: expr, $coords: expr) => {Element::new($ctx, $coords, None, None, Color::rgb8(255, 255, 255), false)};
     ($ctx: expr, $coords: expr, $hollow: expr) => {Element::new($ctx, $coords, $hollow, None, Color::rgb8(255, 255, 255), false)};
@@ -59,36 +71,52 @@ macro_rules! newElement {
     ($ctx: expr, $coords: expr, $hollow: expr, $radius: expr, $color: expr, $hid: expr) => {Element::new($ctx, $coords, $hollow, $radius, $color, $hid)};
 }
 
-struct GameState {
-    mouse: Element,
+#[derive(Clone)]
+pub struct GameState {
+    elements: Vec<Element>,
+    pending: Vec<Coords>,
 }
 
 impl GameState {
-    fn new(ctx: &mut Context) -> GameState {
-        let coords = Coords {x: -10.0, y: -10.0, w: 20.0, h: 20.0};
+    pub fn new() -> GameState {
         GameState {
-            mouse: newElement!(ctx, coords),
+            elements: Vec::new(),
+            pending: Vec::new(),
+        }
+    }
+
+    pub fn requestAdd(&mut self, coords: Coords) {
+        self.pending.push(coords);
+    }
+
+    fn addElement(&mut self, ctx: &mut Context) {
+        for coords in self.pending.drain(..) {
+            self.elements.push(newElement!(ctx, coords));
         }
     }
 }
 
 impl State for GameState {
     fn update(&mut self, ctx: &mut Context) -> tetra::Result<()> {
-        self.mouse.pos = input::get_mouse_position(ctx).round();
+        if !(self.pending.len() == 0) {
+            self.addElement(ctx);
+        }
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> tetra::Result<()> {
-        graphics::clear(ctx, Color::rgb8(108, 56, 56));
-        self.mouse.draw(ctx);
+        graphics::clear(ctx, Color::rgb8(0, 0, 0));
+        for elem in &self.elements {
+            elem.draw(ctx);
+        }
         graphics::flush(ctx);
         Ok(())
     }
 }
 
-pub fn start() -> tetra::Result<()> {
-    ContextBuilder::new("Warehouse Manager", 1280, 720)
-        .quit_on_escape(true)
-        .build()?
-        .run(|ctx| Ok(GameState::new(ctx)))
+pub fn start(gState: GameState) -> tetra::Result {
+    let mut binding = ContextBuilder::new("Warehouse Manager", 800, 600);
+    let ctxBuild = binding.quit_on_escape(true).show_mouse(true);
+    let mut ctx = ctxBuild.build().expect("REASON");
+    ctx.run(|_| Ok(gState.clone()))
 }
