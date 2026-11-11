@@ -73,7 +73,9 @@ fn main() -> tetra::Result {
     let mut warehouse = Warehouse::new();
     warehouse.addItem(String::from("Screwdrivers"), Some(5), Some(Category::Tools));
     
-    let mut gState = solui::GameState::new();
-    solui::newElement!(gState, vec![100.0, 100.0, 20.0, 20.0], radius = 5.0);
+    use solui::ItemTypes::*;
+    let mut gState = solui::GameState::new().setTitle(String::from("Warehouse Manager"));
+    solui::newElement!(gState, vec![20.0, 20.0, 760.0, 560.0], radius = 20.0, hollow = 2.0);
+    solui::newElement!(gState, vec![100.0, 100.0, 50.0, 50.0], text = "I like men".to_string(), itemType = Text);
     solui::start(gState)
 }
