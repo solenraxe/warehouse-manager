@@ -74,6 +74,6 @@ fn main() -> tetra::Result {
     warehouse.addItem(String::from("Screwdrivers"), Some(5), Some(Category::Tools));
     
     let mut gState = solui::GameState::new();
-    gState.requestAdd(solui::Coords::new(100.0, 100.0, 20.0, 20.0));
+    solui::newElement!(gState, vec![100.0, 100.0, 20.0, 20.0], radius = 5.0);
     solui::start(gState)
 }
