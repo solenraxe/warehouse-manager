@@ -10,6 +10,11 @@ use tetra::math::Vec2;
 use tetra::window;
 use tetra::{Context, ContextBuilder, State};
 
+fn noFunctionWarning(ctx: &mut Context) {
+    println!("No function was set for this button!");
+}
+
+#[derive(Clone)]
 pub struct Coords {x: f32, y: f32, w: f32, h: f32,}
 impl Coords {
     pub fn new(x: f32, y: f32, w: f32, h: f32) -> Coords { Coords {x: x, y: y, w: w, h: h} }
@@ -96,34 +101,57 @@ impl Rect {
 }
 impl UiElement for Rect { fn element(&self) -> &Element { &self.base }}
 
-struct Button {
-    base: Element,
-    func: fn(&mut Context),
-}
-impl UiElement for Button { 
-    fn element(&self) -> &Element { &self.base }
-    fn runFunc(&self, ctx: &mut Context) { (&self.func)(ctx); }
-}
-
 struct TextElement {
     base: Element,
     text: Text,
+    textPos: Vec2<f32>,
 }
 impl TextElement {
     fn new(ctx: &mut Context, coords: Coords, hid: bool, text: String) -> TextElement {
+        let e = Element::new(ctx, coords, None, None, Color::rgb8(255, 255, 255), hid);
+        let mut t = Text::new(text, Font::vector(ctx, "./resources/ComicSans.ttf", 24.0).expect("REASON"));
+        let b = t.get_bounds(ctx).unwrap();
+        let textPos = Vec2::new(e.rect.x-b.width/2.0, e.rect.y-b.height/2.0);
         TextElement {
-            base: Element::new(ctx, coords, None, None, Color::rgb8(255, 255, 255), hid),
-            text: Text::new(text, Font::vector(ctx, "./resources/ComicSans.ttf", 16.0).expect("REASON")),
+            base: e,
+            text: t,
+            textPos: textPos,
         }
     }
 }
 impl UiElement for TextElement { 
     fn element(&self) -> &Element { &self.base }
     fn draw(&mut self, ctx: &mut Context) {
-        let e = self.element();
-        self.text.draw(ctx, Vec2::new(e.rect.x, e.rect.y));
+        self.text.draw(ctx, self.textPos);
     }
  }
+
+struct Button {
+    base: Element,
+    text: TextElement,
+    func: fn(&mut Context),
+}
+impl Button {
+    fn new(ctx: &mut Context, coords: Coords, hid: bool, text: String, func: Option<fn(&mut Context)>) -> Button {
+        let mut e = Element::new(ctx, coords.clone(), Some(2.0), Some(5.0), Color::rgb8(255, 255, 255), hid);
+        e.clickable = true;
+        let tPos = Coords {x: coords.x+coords.w/2.0, y: coords.y+coords.h/2.0, w: coords.w, h: coords.h};
+        let t = TextElement::new(ctx, tPos, hid, text);
+        Button {
+            base: e,
+            text: t,
+            func: func.unwrap_or(noFunctionWarning),
+        }
+    }
+}
+impl UiElement for Button { 
+    fn element(&self) -> &Element { &self.base }
+    fn draw(&mut self, ctx: &mut Context) {
+        self.element().draw(ctx);
+        self.text.draw(ctx);
+    }
+    fn runFunc(&self, ctx: &mut Context) { (&self.func)(ctx); }
+}
 
 pub struct GameState {
     elements: Vec<Box<dyn UiElement>>,
@@ -168,7 +196,7 @@ impl GameState {
             self.elements.push(
                 match constr.itemType {
                     ItemTypes::Rect => Box::new(Rect::new(ctx, constr.coords, constr.hollow, constr.radius, constr.color, constr.hidden)),
-                    ItemTypes::Button => Box::new(Rect::new(ctx, constr.coords, constr.hollow, constr.radius, constr.color, constr.hidden)),
+                    ItemTypes::Button => Box::new(Button::new(ctx, constr.coords, constr.hidden, constr.text.unwrap_or(String::from("")), constr.func)),
                     ItemTypes::Text => Box::new(TextElement::new(ctx, constr.coords, constr.hidden, constr.text.unwrap_or(String::from("")))),
                     _ => Box::new(Rect::new(ctx, constr.coords, constr.hollow, constr.radius, constr.color, constr.hidden)),
                 }
@@ -185,7 +213,7 @@ impl State for GameState {
             let m = input::get_mouse_position(ctx);
             for elem in &self.elements {
                 if elem.checkClick(ctx) {
-                    println!("Works");
+                    elem.runFunc(ctx);
                 }
             }
         }

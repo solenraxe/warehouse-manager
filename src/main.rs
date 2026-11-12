@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 #![allow(non_snake_case)]
+#![allow(unused)]
 
 mod solui;
-
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -75,7 +75,8 @@ fn main() -> tetra::Result {
     
     use solui::ItemTypes::*;
     let mut gState = solui::GameState::new().setTitle(String::from("Warehouse Manager"));
-    solui::newElement!(gState, vec![20.0, 20.0, 760.0, 560.0], radius = 20.0, hollow = 2.0);
-    solui::newElement!(gState, vec![100.0, 100.0, 50.0, 50.0], text = "I like men".to_string(), itemType = Text);
+    solui::newElement!(gState, vec![20.0, 20.0, 760.0, 560.0], radius = 10.0, hollow = 2.0);
+    solui::newElement!(gState, vec![400.0, 200.0, 50.0, 50.0], text = "we're beesting it".to_string(), itemType = Text);
+    solui::newElement!(gState, vec![300.0, 300.0, 200.0, 50.0], text = "i'm a button".to_string(), itemType = Button);
     solui::start(gState)
 }
